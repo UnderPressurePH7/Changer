@@ -134,7 +134,7 @@ def patch_vehicle_arena_info_vo():
                     result = VehicleArenaInfoVO._original_getDisplayedName(self, name)
                     orig_name = get_shared_data('original_name')
                     if isinstance(result, (str, unicode)) and orig_name and orig_name in result:
-                        result = result.replace(orig_name, _config.load_nickname_from_config())
+                        result = result.replace(orig_name, new_name)
                         print_debug("VehicleArenaInfoVO.getDisplayedName: Changed name")
                     return result
                 
@@ -150,7 +150,7 @@ def patch_vehicle_arena_info_vo():
                     orig_name = get_shared_data('original_name')
                     if result == orig_name:
                         print_debug("PlayerInfoVO.getPlayerLabel: Changed name")
-                        return _config.load_nickname_from_config()
+                        return new_name
                     return result
                 
                 PlayerInfoVO.getPlayerLabel = patched_getPlayerLabel
@@ -163,9 +163,8 @@ def patch_vehicle_arena_info_vo():
                 def patched_update(self, invalidate=0, name=None, **kwargs):
                     orig_name = get_shared_data('original_name')
                     if name and name == orig_name:
-                        name = _config.load_nickname_from_config()
                         print_debug("PlayerInfoVO.update: Changed name parameter")
-                    return PlayerInfoVO._original_update(self, invalidate=invalidate, name=name, **kwargs)
+                    return PlayerInfoVO._original_update(self, invalidate=invalidate, name=new_name, **kwargs)
                 
                 PlayerInfoVO.update = patched_update
                 print_debug("PlayerInfoVO.update patched")
@@ -197,7 +196,7 @@ def patch_vehicles_info_collection():
                         hasattr(vInfoVO.player, 'name') and
                         orig_name and
                         vInfoVO.player.name == orig_name):
-                        vInfoVO.player.name = _config.load_nickname_from_config()
+                        vInfoVO.player.name = new_name
                         print_debug("VehiclesInfoCollection.iterator: Changed name")
                     yield vInfoVO
             
