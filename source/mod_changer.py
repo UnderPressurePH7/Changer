@@ -20,7 +20,10 @@ def init():
         print_error("Error initializing mod: {}".format(e))
 
 def fini():
+    global _config
     try:
+        if _config:
+            _config = None
         print_log('MOD {} START FINALIZING'.format(__mod_name__))
     except Exception as e:
         print_error("Error finalizing mod: {}".format(e))

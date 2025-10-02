@@ -2,7 +2,8 @@
 __all__ = [
     'print_log',
     'print_error',
-    'print_debug',
+    'print_debug'
+    ]
 
 
 DEBUG_MODE = True
