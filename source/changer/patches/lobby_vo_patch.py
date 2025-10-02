@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ..utils import  print_debug, print_error
+from ..utils import print_debug, print_error, get_shared_data
 
 _original_make_user = None
 _original_make_player = None
@@ -77,7 +77,8 @@ def patch_user_cm_handler():
                 player = BigWorld.player()
                 
                 if player and isinstance(vo, dict):
-                    if vo.get('dbID') == player.databaseID or vo.get('userName') == player.name:
+                    original_player_name = get_shared_data('original_name')
+                    if vo.get('dbID') == player.databaseID or (original_player_name and vo.get('userName') == original_player_name):
                         new_name = _config.load_nickname_from_config()
                         vo['userName'] = new_name
                         
@@ -110,7 +111,8 @@ def patch_prebattle_vo():
                 import BigWorld
                 player = BigWorld.player()
                 
-                if player and creatorName == player.name:
+                original_player_name = get_shared_data('original_name')
+                if player and original_player_name and creatorName == original_player_name:
                     new_name = _config.load_nickname_from_config()
                     print_debug("Prebattle VO: Changed creator name to '%s'" % new_name)
                     return original_getPrebattleFullDescription(unitIdx, creator, new_name, **kwargs)

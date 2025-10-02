@@ -2,11 +2,10 @@
 import BigWorld
 from gui.Scaleform.daapi.view.lobby.header.LobbyHeader import LobbyHeader
 from gui.shared.personality import ServicesLocator
-from ..utils import print_debug, print_error
+from ..utils import print_debug, print_error, get_shared_data
 
 _original_getPlayerFullName = None
 _original_setPlayerInfo = None
-_original_player_name = None
 _config = None
 
 def patch(config):
@@ -14,7 +13,6 @@ def patch(config):
     _config = config
     
     print_debug("Starting lobby chat patches...")
-    _get_original_player_name()
     
     try:
         _original_getPlayerFullName = ServicesLocator.lobbyContext.getPlayerFullName
@@ -33,23 +31,10 @@ def patch(config):
     
     patch_messenger()
 
-def _get_original_player_name():
-    global _original_player_name
-    try:
-        player = BigWorld.player()
-        if player and hasattr(player, 'name') and player.name:
-            _original_player_name = player.name
-            print_debug("Lobby: Original player name set: %s" % _original_player_name)
-        else:
-            print_debug("Lobby: Player not ready, retrying...")
-            BigWorld.callback(1.0, _get_original_player_name)
-    except Exception as e:
-        print_error("Error getting original player name: %s" % str(e))
-        BigWorld.callback(1.0, _get_original_player_name)
-
 def _patched_getPlayerFullName(pName, clanInfo=None, clanAbbrev=None, regionCode=None, pDBID=None):
     try:
-        if _original_player_name and pName == _original_player_name:
+        original_player_name = get_shared_data('original_name')
+        if original_player_name and pName == original_player_name:
             new_name = _config.load_nickname_from_config()
             print_debug("Lobby: getPlayerFullName changed '%s' -> '%s'" % (pName, new_name))
             
@@ -64,8 +49,9 @@ def _patched_getPlayerFullName(pName, clanInfo=None, clanAbbrev=None, regionCode
 
 def _patched_setPlayerInfo(instance, tooltip, tooltipType, tooltipArgs=None, warningIcon=False, userVO=None):
     try:
-        if userVO and _original_player_name:
-            if userVO.get('userName') == _original_player_name:
+        if userVO:
+            original_player_name = get_shared_data('original_name')
+            if original_player_name and userVO.get('userName') == original_player_name:
                 new_name = _config.load_nickname_from_config()
                 clanAbbrev = userVO.get('clanAbbrev', None)
                 
@@ -89,15 +75,16 @@ def patch_messenger():
             def patched_formatMessage(message, **kwargs):
                 result = original_formatMessage(message, **kwargs)
                 
-                if _original_player_name and isinstance(result, dict):
-                    if result.get('userName') == _original_player_name:
+                original_player_name = get_shared_data('original_name')
+                if original_player_name and isinstance(result, dict):
+                    if result.get('userName') == original_player_name:
                         new_name = _config.load_nickname_from_config()
                         result['userName'] = new_name
                         print_debug("Messenger: Changed userName in message")
 
-                    if 'message' in result and _original_player_name in result['message']:
+                    if 'message' in result and original_player_name in result['message']:
                         new_name = _config.load_nickname_from_config()
-                        result['message'] = result['message'].replace(_original_player_name, new_name)
+                        result['message'] = result['message'].replace(original_player_name, new_name)
                         print_debug("Messenger: Changed name in message text")
                 
                 return result
@@ -108,6 +95,7 @@ def patch_messenger():
         print_debug("Messenger chat_message not available")
     except Exception as e:
         print_error("Error patching messenger: %s" % str(e))
+    
     try:
         from messenger.formatters.users_messages import UserMessagesFormatter
         
@@ -117,8 +105,9 @@ def patch_messenger():
             def patched_format(self, message, **kwargs):
                 result = original_format(self, message, **kwargs)
                 
-                if _original_player_name and isinstance(result, dict):
-                    if result.get('userName') == _original_player_name:
+                original_player_name = get_shared_data('original_name')
+                if original_player_name and isinstance(result, dict):
+                    if result.get('userName') == original_player_name:
                         new_name = _config.load_nickname_from_config()
                         result['userName'] = new_name
                         print_debug("UserMessagesFormatter: Changed userName")

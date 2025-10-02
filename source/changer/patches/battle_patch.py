@@ -1,20 +1,17 @@
 # -*- coding: utf-8 -*-
 import BigWorld
 from gui.battle_control import avatar_getter
-from ..utils import print_debug, print_error
+from ..utils import print_debug, print_error, get_shared_data
 
 _original_fill_player = None
 _original_invalidate_personal = None
 _config = None
-_original_player_name = None
 
 def patch(config):
     global _config
     _config = config
     
     print_debug("Starting comprehensive battle patches...")
-    
-    _get_original_player_name()
     
     patch_tab_view()
     patch_arena_data_provider()
@@ -28,20 +25,6 @@ def patch(config):
     BigWorld.callback(2.0, lambda: patch_vehicle_arena_info_vo())
     
     print_debug("All battle patches applied")
-
-def _get_original_player_name():
-    global _original_player_name
-    try:
-        player = BigWorld.player()
-        if player and hasattr(player, 'name') and player.name:
-            _original_player_name = player.name
-            print_debug("Original player name set: %s" % _original_player_name)
-        else:
-            print_debug("Player not ready, retrying...")
-            BigWorld.callback(1.0, _get_original_player_name)
-    except Exception as e:
-        print_error("Error getting original player name: %s" % str(e))
-        BigWorld.callback(1.0, _get_original_player_name)
 
 def patch_tab_view():
     global _original_fill_player, _original_invalidate_personal
@@ -96,7 +79,8 @@ def patch_arena_data_provider():
         def patched_getVehicleInfo(self, vID=None):
             vInfo = original_getVehicleInfo(self, vID)
             if vInfo and hasattr(vInfo, 'player') and hasattr(vInfo.player, 'name'):
-                if _original_player_name and vInfo.player.name == _original_player_name:
+                original_player_name = get_shared_data('original_name')
+                if original_player_name and vInfo.player.name == original_player_name:
                     new_name = _config.load_nickname_from_config()
                     vInfo.player.name = new_name
                     print_debug("ArenaDataProvider: Changed name to '%s'" % new_name)
@@ -117,7 +101,8 @@ def patch_player_formatter():
         
         @staticmethod
         def patched_normalize_player_name(name):
-            if _original_player_name and name == _original_player_name:
+            original_player_name = get_shared_data('original_name')
+            if original_player_name and name == original_player_name:
                 new_name = _config.load_nickname_from_config()
                 print_debug("PlayerFormatter: Changed name to '%s'" % new_name)
                 return new_name
@@ -134,7 +119,8 @@ def patch_vehicle_arena_info_vo():
     try:
         from gui.battle_control.arena_info.arena_vos import VehicleArenaInfoVO, PlayerInfoVO
         
-        if not _original_player_name:
+        original_player_name = get_shared_data('original_name')
+        if not original_player_name:
             print_debug("Original player name not set yet, skipping VO patch")
             return
         
@@ -146,8 +132,9 @@ def patch_vehicle_arena_info_vo():
                 
                 def patched_getDisplayedName(self, name=None):
                     result = VehicleArenaInfoVO._original_getDisplayedName(self, name)
-                    if isinstance(result, (str, unicode)) and _original_player_name in result:
-                        result = result.replace(_original_player_name, new_name)
+                    orig_name = get_shared_data('original_name')
+                    if isinstance(result, (str, unicode)) and orig_name and orig_name in result:
+                        result = result.replace(orig_name, _config.load_nickname_from_config())
                         print_debug("VehicleArenaInfoVO.getDisplayedName: Changed name")
                     return result
                 
@@ -160,9 +147,10 @@ def patch_vehicle_arena_info_vo():
                 
                 def patched_getPlayerLabel(self):
                     result = PlayerInfoVO._original_getPlayerLabel(self)
-                    if result == _original_player_name:
+                    orig_name = get_shared_data('original_name')
+                    if result == orig_name:
                         print_debug("PlayerInfoVO.getPlayerLabel: Changed name")
-                        return new_name
+                        return _config.load_nickname_from_config()
                     return result
                 
                 PlayerInfoVO.getPlayerLabel = patched_getPlayerLabel
@@ -173,8 +161,9 @@ def patch_vehicle_arena_info_vo():
                 PlayerInfoVO._original_update = PlayerInfoVO.update
                 
                 def patched_update(self, invalidate=0, name=None, **kwargs):
-                    if name and name == _original_player_name:
-                        name = new_name
+                    orig_name = get_shared_data('original_name')
+                    if name and name == orig_name:
+                        name = _config.load_nickname_from_config()
                         print_debug("PlayerInfoVO.update: Changed name parameter")
                     return PlayerInfoVO._original_update(self, invalidate=invalidate, name=name, **kwargs)
                 
@@ -191,7 +180,8 @@ def patch_vehicles_info_collection():
     try:
         from gui.battle_control.arena_info.vos_collections import VehiclesInfoCollection
         
-        if not _original_player_name:
+        original_player_name = get_shared_data('original_name')
+        if not original_player_name:
             print_debug("Original player name not set yet, skipping collection patch")
             return
         
@@ -202,10 +192,12 @@ def patch_vehicles_info_collection():
             
             def patched_iterator(self, arenaDP):
                 for vInfoVO in VehiclesInfoCollection._original_iterator(self, arenaDP):
+                    orig_name = get_shared_data('original_name')
                     if (hasattr(vInfoVO, 'player') and 
                         hasattr(vInfoVO.player, 'name') and
-                        vInfoVO.player.name == _original_player_name):
-                        vInfoVO.player.name = new_name
+                        orig_name and
+                        vInfoVO.player.name == orig_name):
+                        vInfoVO.player.name = _config.load_nickname_from_config()
                         print_debug("VehiclesInfoCollection.iterator: Changed name")
                     yield vInfoVO
             
@@ -228,7 +220,8 @@ def patch_players_panel_controller():
         
         def patched_addPlayerInfo(self, vID, vInfo):
             if vInfo and hasattr(vInfo, 'player') and hasattr(vInfo.player, 'name'):
-                if _original_player_name and vInfo.player.name == _original_player_name:
+                original_player_name = get_shared_data('original_name')
+                if original_player_name and vInfo.player.name == original_player_name:
                     new_name = _config.load_nickname_from_config()
                     vInfo.player.name = new_name
                     print_debug("PlayersPanelController: Changed player name")
