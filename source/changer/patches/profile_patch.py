@@ -1,5 +1,5 @@
-# changer/patches/profile_patch.py
-from ..utils import print_log, print_debug, print_error
+# -*- coding: utf-8 -*-
+from ..utils import print_debug, print_error
 
 _original_populate_page = None
 _original_populate_window = None

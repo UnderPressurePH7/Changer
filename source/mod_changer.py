@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from changer.utils import print_error, print_log
 from changer.config import Config
 from changer.patches import apply_patches

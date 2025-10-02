@@ -1,4 +1,4 @@
-# source/changer/patches/account_patch.py
+# -*- coding: utf-8 -*-
 import BigWorld
 from ..utils import print_log, print_debug, print_error
 
