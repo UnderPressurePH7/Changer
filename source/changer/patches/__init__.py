@@ -8,9 +8,13 @@ def apply_patches(config):
     from . import battle_patch
     from . import lobby_vo_patch
     from . import lobby_chat_patch
+    from . import clan_patch
+    from . import battle_results_patch
     
     account_patch.patch(config)
     profile_patch.patch(config)
     battle_patch.patch(config)
     lobby_vo_patch.patch(config)
     lobby_chat_patch.patch(config)
+    clan_patch.patch(config)
+    battle_results_patch.patch(config)
