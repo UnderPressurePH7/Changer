@@ -31,7 +31,7 @@ def patch_style_get_player_name():
             try:
                 result = original_getPlayerName(playerInfo, showClan, showRegion)
                 
-                myDBID = getAccountDatabaseID()
+                myDBID = get_shared_data('accountDBID')
                 if myDBID is None:
                     print_debug("No myDBID found")
                     return result
@@ -41,7 +41,7 @@ def patch_style_get_player_name():
                     player_dbid = playerInfo.getDbID()
                 
                 if player_dbid == myDBID:
-                    new_name = _config.load_nickname_from_config()
+                    new_name = get_shared_data('new_name')
                     original_name = get_shared_data('original_name')
                     
                     if new_name and original_name and original_name in result:
