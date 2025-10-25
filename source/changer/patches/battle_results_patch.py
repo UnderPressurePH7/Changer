@@ -19,6 +19,10 @@ def patch_style_get_player_name():
     try:
         from gui.battle_results.components import style
         
+        if not hasattr(style, 'getPlayerName'):
+            print_debug("style.getPlayerName not found, skipping")
+            return
+        
         if hasattr(style, '_original_getPlayerName'):
             print_debug("style.getPlayerName already patched, skipping")
             return
@@ -60,6 +64,8 @@ def patch_style_get_player_name():
         
     except ImportError:
         print_debug("gui.battle_results.components.style not available")
+    except AttributeError:
+        print_debug("style.getPlayerName not available in this WoT version")
     except Exception as e:
         print_error("Failed to patch style.getPlayerName: %s" % str(e))
 

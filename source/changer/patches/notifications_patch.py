@@ -151,4 +151,3 @@ def patch_system_messages():
         print_debug("ServiceChannelFormatter not available")
     except Exception as e:
         print_error("Failed to patch ServiceChannelFormatter: %s" % str(e))
-

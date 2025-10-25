@@ -153,4 +153,3 @@ def patch_user_string():
         print_debug("StatsRequester not available")
     except Exception as e:
         print_error("Failed to patch StatsRequester: %s" % str(e))
-

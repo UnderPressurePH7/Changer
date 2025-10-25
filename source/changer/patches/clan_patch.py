@@ -82,4 +82,3 @@ def patch_clan_emblem():
         print_debug("ClanHelpers not available")
     except Exception as e:
         print_error("Failed to patch ClanHelpers: %s" % str(e))
-
