@@ -9,7 +9,6 @@ def apply_patches(config):
     from . import lobby_vo_patch
     from . import lobby_chat_patch
     from . import models_patch
-    from . import clan_patch
     
     account_patch.patch(config)
     
@@ -19,4 +18,3 @@ def apply_patches(config):
     lobby_chat_patch.patch()
     models_patch.patch()
     
-    clan_patch.patch()

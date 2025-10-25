@@ -8,7 +8,8 @@ def patch():
     
     patch_lobby_context()
     patch_lobby_header()
-    patch_messenger()
+    patch_lobby_message_builder()
+    patch_battle_message_builder()
     
     print_debug("Lobby chat patches applied")
 
@@ -85,44 +86,71 @@ def patch_lobby_header():
     except Exception as e:
         print_error("Failed to patch LobbyHeader: %s" % str(e))
 
-def patch_messenger():
+
+def patch_lobby_message_builder():
     try:
-        from messenger.formatters import chat_message
+        from messenger.formatters.chat_message import LobbyMessageBuilder
         
-        if not hasattr(chat_message, 'formatMessage'):
-            print_debug("chat_message.formatMessage not found")
+        if hasattr(LobbyMessageBuilder, '_original_setName'):
+            print_debug("LobbyMessageBuilder.setName already patched, skipping")
             return
         
-        if hasattr(chat_message, '_original_formatMessage'):
-            print_debug("chat_message.formatMessage already patched, skipping")
-            return
+        original_setName = LobbyMessageBuilder.setName
         
-        original_formatMessage = chat_message.formatMessage
-        
-        def patched_formatMessage(message, **kwargs):
-            result = original_formatMessage(message, **kwargs)
-            
+        def patched_setName(self, dbID, nickName, clanAbbrev=None):
             try:
                 original_player_name = get_shared_data('original_name')
-                if original_player_name and isinstance(result, dict):
+                myDBID = get_shared_data('accountDBID')
+                
+                if myDBID and dbID == myDBID and original_player_name and nickName == original_player_name:
                     new_name = get_shared_data('new_name')
-                    
-                    if result.get('userName') == original_player_name:
-                        result['userName'] = new_name
-                        print_debug("Chat: name changed in message")
-                    
-                    if 'message' in result and original_player_name in result['message']:
-                        result['message'] = result['message'].replace(original_player_name, new_name)
+                    print_debug("Lobby chat: name changed in LobbyMessageBuilder")
+                    return original_setName(self, dbID, new_name, clanAbbrev)
+                
+                return original_setName(self, dbID, nickName, clanAbbrev)
             except Exception as e:
-                print_error("Error in patched formatMessage: %s" % str(e))
-            
-            return result
+                print_error("Error in patched LobbyMessageBuilder.setName: %s" % str(e))
+                return original_setName(self, dbID, nickName, clanAbbrev)
         
-        chat_message._original_formatMessage = original_formatMessage
-        chat_message.formatMessage = patched_formatMessage
-        print_debug("chat_message.formatMessage patched successfully")
+        LobbyMessageBuilder._original_setName = original_setName
+        LobbyMessageBuilder.setName = patched_setName
+        print_debug("LobbyMessageBuilder.setName patched successfully")
         
     except ImportError:
-        print_debug("Messenger chat_message not available")
+        print_debug("LobbyMessageBuilder not available")
     except Exception as e:
-        print_error("Error patching messenger: %s" % str(e))
+        print_error("Failed to patch LobbyMessageBuilder: %s" % str(e))
+
+
+def patch_battle_message_builder():
+    try:
+        from messenger.formatters.chat_message import _BattleMessageBuilder
+        
+        if hasattr(_BattleMessageBuilder, '_original_setName'):
+            print_debug("_BattleMessageBuilder.setName already patched, skipping")
+            return
+        
+        original_setName = _BattleMessageBuilder.setName
+        
+        def patched_setName(self, avatarSessionID, pName=None, suffix=''):
+            try:
+                original_player_name = get_shared_data('original_name')
+                
+                if original_player_name and pName and pName == original_player_name:
+                    new_name = get_shared_data('new_name')
+                    print_debug("Battle chat: name changed in _BattleMessageBuilder")
+                    return original_setName(self, avatarSessionID, new_name, suffix)
+                
+                return original_setName(self, avatarSessionID, pName, suffix)
+            except Exception as e:
+                print_error("Error in patched _BattleMessageBuilder.setName: %s" % str(e))
+                return original_setName(self, avatarSessionID, pName, suffix)
+        
+        _BattleMessageBuilder._original_setName = original_setName
+        _BattleMessageBuilder.setName = patched_setName
+        print_debug("_BattleMessageBuilder.setName patched successfully")
+        
+    except ImportError:
+        print_debug("_BattleMessageBuilder not available")
+    except Exception as e:
+        print_error("Failed to patch _BattleMessageBuilder: %s" % str(e))
