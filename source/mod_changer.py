@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from changer.utils import print_error, print_log
 from changer.config import Config
-from source.changer.accountDBID import AccountDBID
+from changer.accountDBID import AccountDBID
 from changer.patches import apply_patches
 
 __version__ = "0.0.6" 
