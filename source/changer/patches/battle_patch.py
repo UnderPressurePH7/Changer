@@ -8,11 +8,8 @@ try:
 except NameError:
     unicode = str
 
-_original_fill_player = None
-_original_invalidate_personal = None
 
 def patch():
-    
     print_debug("Starting comprehensive battle patches...")
     
     patch_tab_view()
