@@ -6,7 +6,7 @@ from account_helpers import getAccountDatabaseID
 from .utils import print_debug, print_error, set_shared_data, get_shared_data
 
 
-class AccountDID(object):
+class AccountDBID(object):
 
     def __init__(self):
         self._accountDBID = None

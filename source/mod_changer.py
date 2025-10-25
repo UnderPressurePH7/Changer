@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from changer.utils import print_error, print_log
 from changer.config import Config
-from changer.accountDID import AccountDID
+from source.changer.accountDBID import AccountDBID
 from changer.patches import apply_patches
 
 __version__ = "0.0.5" 
@@ -16,7 +16,7 @@ def init():
     global _config, _account_did
     try:
         print_log('MOD {} START LOADING: v{}'.format(__mod_name__, __version__))
-        _account_did = AccountDID()
+        _account_did = AccountDBID()
         _config = Config()
         apply_patches(_config)
         print_log('MOD {} LOADED SUCCESSFULLY'.format(__mod_name__))
